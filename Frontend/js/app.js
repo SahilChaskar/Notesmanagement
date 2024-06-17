@@ -5,7 +5,6 @@ $(document).ready(function() {
     function LandingPage() {
         $('body').append('<header class="main-header"><h1>Notes Management App</h1></header>');
 
-        
         $('body').append(`
             <form id="loginForm">
                 <input type="text" id="loginUsername" name="username" placeholder="Username" autocomplete=true required />
@@ -15,8 +14,7 @@ $(document).ready(function() {
             </form>
         `);
 
-
-        $('body').append( `
+        $('body').append(`
             <form id="registerForm">
                 <input type="text" id="registerFirstName" name="firstName" placeholder="First Name" required />
                 <input type="text" id="registerLastName" name="lastName" placeholder="Last Name" required />
@@ -26,10 +24,9 @@ $(document).ready(function() {
                 <button type="submit">Register</button>
                 <button type="button" id="showLoginForm">Back to Login</button>
             </form>
-            `);
-        
-        
-        $('body').append( `
+        `);
+
+        $('body').append(`
             <form id="createNoteForm">
                 <h4 id="notesheader"> Start Creating Your Own Notes!! </h4>
                 <input type="text" id="noteTitle" name="title" placeholder="Enter title" required />
@@ -38,15 +35,11 @@ $(document).ready(function() {
                 <button id="viewNotesButton">View Notes</button>
             </form>
         `);
-        
-        
+
         $('body').append('<div id="notesList"></div>');
-        
-        
+
         $('body').append('<button id="logoutButton">Logout</button>');
-    
-        
-        
+
         $('#registerForm, #createNoteForm, #notesList, #logoutButton, #viewNotesButton').hide();
         bindEventListeners();
     }
@@ -56,23 +49,90 @@ $(document).ready(function() {
         $('#registerForm').on('submit', handleRegister);
         $('#logoutButton').on('click', logout);
 
-        $('#showRegisterForm').on('click', Showregistration=()=>{
+        $('#showRegisterForm').on('click', function() {
             $('#loginForm, #notesList').hide();
             $('#registerForm').show();
         });
         $('#showLoginForm').on('click', showLoginForm);
-        
-        
+
         $('#createNoteForm').on('submit', handleNoteCreation);
-        $('#viewNotesButton').on('click', showNotes=()=>{
+        $('#viewNotesButton').on('click', function() {
             $('#createNoteForm').hide();
             fetchAndDisplayNotes();
+        });
+        $('#notesList').on('click', '.editbutton', function() {
+            const noteId = $(this).closest('.note').data('note-id');
+            editNotes(noteId);
+        });
+        $('#notesList').on('click', '.deletebutton', function() {
+            const noteId = $(this).closest('.note').data('note-id');
+            deleteNotes(noteId);
+        });
+        $('#notesList').on('click', '.savebutton', function() {
+            const noteId = $(this).closest('.note').data('note-id');
+            saveEditedNote(noteId);
         });
     }
 
     function showLoginForm() {
         $('#registerForm, #notesList').hide();
         $('#loginForm').show();
+    }
+
+    function editNotes(noteId) {
+        const note = $(`.note[data-note-id="${noteId}"]`);
+        const textarea = note.find('textarea');
+        textarea.removeAttr('disabled');
+        note.append('<button class="savebutton">Save</button>');
+    }
+
+    function saveEditedNote(noteId) {
+        const note = $(`.note[data-note-id="${noteId}"]`);
+        const content = note.find('textarea').val();
+
+        const editedNoteData = {
+            content: content
+        };
+        // console.log(editedNoteData)
+
+        $.ajax({
+            type: 'PUT',
+            url: `http://localhost:3000/api/getnotes${noteId}`,
+            data: JSON.stringify(editedNoteData),
+            contentType: 'application/json',
+            headers: {
+                'Authorization': `Bearer ${token}`
+            },
+            success: function(response) {
+                toastr.success('Note edited successfully!');
+                fetchAndDisplayNotes();
+            },
+            error: function(xhr, status, error) {
+                toastr.error('Failed to edit note: ' + error);
+                console.error('Failed to edit note:', error, status, xhr);
+            }
+        });
+    }
+
+    function deleteNotes(noteId) {
+        // console.log("Delete button clicked for note ID:", noteId);
+        
+        $.ajax({
+            type:'DELETE',
+            url:`http://localhost:3000/api/deletenote${noteId}`,
+            headers: {
+                'Authorization': `Bearer ${token}`
+            },
+            success:function(response){
+                console.log("Note deleted successfully",response);
+                toastr.success('Note deleted successfully!');
+                fetchAndDisplayNotes();
+            },
+            error: function(xhr, status, error) {
+                toastr.error('Failed to delete note: ' + error);
+                console.error('Failed to delete note:', error, status, xhr);
+            }
+        })
     }
 
     function handleLogin(event) {
@@ -88,20 +148,16 @@ $(document).ready(function() {
             data: JSON.stringify(credentials),
             contentType: 'application/json',
             success: function(response) {
-                console.log('User logged in:', response);
                 token = response.token;
-                // console.log(token, "My token", formData)
-                toastr.success('User login successfully!');
+                toastr.success('User logged in successfully!');
                 $('#loginForm').hide();
-                $('#createNoteForm, #logoutButton,#viewNotesButton').show();
+                $('#createNoteForm, #logoutButton, #viewNotesButton').show();
             },
             error: function(xhr, status, error) {
-                console.error('Login failed:', error);
                 toastr.error('Login failed: ' + error);
             }
         });
     }
-    
 
     function handleRegister(event) {
         event.preventDefault();
@@ -111,7 +167,6 @@ $(document).ready(function() {
             email: $('#registerEmail').val(),
             username: $('#registerUsername').val(),
             password: $('#registerPassword').val()
-
         };
 
         $.ajax({
@@ -126,7 +181,6 @@ $(document).ready(function() {
             },
             error: function(xhr, status, error) {
                 toastr.error('Registration failed: ' + error);
-                console.error('Registration failed:', error, status, xhr);
             }
         });
     }
@@ -138,7 +192,6 @@ $(document).ready(function() {
             content: $('#noteContent').val()
         };
 
-        
         $.ajax({
             type: 'POST',
             url: 'http://localhost:3000/api/notes',
@@ -153,14 +206,13 @@ $(document).ready(function() {
             },
             error: function(xhr, status, error) {
                 toastr.error('Failed to add note: ' + error);
-                console.error('Failed to add note:', error, status, xhr);
             }
         });
     }
 
     function fetchAndDisplayNotes() {
         $('#notesList').html('<p>Loading notes...</p>').show();
-        
+
         $.ajax({
             type: 'GET',
             url: 'http://localhost:3000/api/getnotes',
@@ -169,14 +221,16 @@ $(document).ready(function() {
                 'Authorization': `Bearer ${token}`
             },
             success: function(response) {
-                notes=response
+                const notes = response;
                 if (notes.length === 0) {
                     $('#notesList').html('<p>No notes found. Create your first note!</p>');
                 } else {
                     const notesHtml = notes.map(note => `
-                        <div class="note">
+                        <div class="note" data-note-id="${note.id}" data-note-content="${note.content}">
+                            <button class="deletebutton"><i class="fa fa-trash" id="trashicon" aria-hidden="true"></i></button>
+                            <button class="editbutton"><i class="fa fa-edit" id="editicon"></i></button>
                             <h3>${note.title}</h3>
-                            <p>${note.content}</p>
+                            <p><textarea disabled>${note.content}</textarea></p>
                         </div>
                     `).join('');
                     $('#notesList').html(notesHtml);
@@ -185,7 +239,6 @@ $(document).ready(function() {
             error: function(xhr, status, error) {
                 $('#notesList').html('<p>Failed to load notes. Please try again.</p>');
                 toastr.error('Failed to load notes: ' + error);
-                console.error('Failed to load notes:', error, status, xhr);
             },
             complete: function() {
                 $('#notesList').append('<button id="backToCreateNote">Back to Create Note</button>');
