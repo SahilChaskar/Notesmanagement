@@ -27,8 +27,8 @@ The Notes Management App is a full-stack CRUD (Create, Read, Update, Delete) web
 ## Setup and Installation
 1. Clone the repository:
    ```sh
-   git clone https://github.com/yourusername/notes-management-app.git
-   cd notes-management-app
+   git clone https://github.com/SahilChaskar/Notesmanagement.git
+   cd Notesmanagement
    ```
 2. Create PostgreSQL tables:
    - Connect to your PostgreSQL database:
